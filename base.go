@@ -16,8 +16,18 @@ import (
 ///
 ///
 
+// Allocate and return a new DbConfig
+func New() *DbConfig {
+	db := &DbConfig{}
+	return db
+}
+
+///
+///
+///
+
 // open the sqlite database
-func (db *DbConfig) OpenDB() error {
+func (db *DbConfig) Open() error {
 
 	var err error
 
@@ -42,7 +52,7 @@ func (db *DbConfig) OpenDB() error {
 ///
 
 // close the sqlite database
-func (db *DbConfig) CloseDB() error {
+func (db *DbConfig) Close() error {
 	err := db.Db.Close()
 	if err != nil {
 		return err
@@ -57,7 +67,7 @@ func (db *DbConfig) CloseDB() error {
 // execute the sql statement, locking the function.
 // locking is used to  prevent reading before the previous write is complete.
 // this has a fallback timer on/for errors.
-func (db *DbConfig) RunSQLStatement(sql string) error {
+func (db *DbConfig) Run(sql string) error {
 
 	// lock the function
 	db.dblock.Lock()
@@ -105,7 +115,7 @@ func (db *DbConfig) CreateTable(table string, s interface{}) error {
 
 	sqlstatement := db.CreateTableFromStruct(table, s)
 
-	err := db.RunSQLStatement(sqlstatement)
+	err := db.Run(sqlstatement)
 	if err != nil {
 		return err
 	}
@@ -123,7 +133,7 @@ func (db *DbConfig) RemoveAndCreateNewDB(table string, s interface{}) error {
 
 	sqlstatement := "DROP TABLE IF EXISTS " + table + ";"
 
-	err := db.RunSQLStatement(sqlstatement)
+	err := db.Run(sqlstatement)
 	if err != nil {
 		return err
 	}
