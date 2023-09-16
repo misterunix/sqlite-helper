@@ -37,6 +37,23 @@ func (db *DbConfig) OpenDB() error {
 
 }
 
+///
+///
+///
+
+// close the sqlite database
+func (db *DbConfig) CloseDB() error {
+	err := db.Db.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+///
+///
+///
+
 // execute the sql statement, locking the function.
 // locking is used to  prevent reading before the previous write is complete.
 // this has a fallback timer on/for errors.
@@ -261,6 +278,113 @@ func (db *DbConfig) InsertIntoTable(table string, s interface{}) string {
 	sqlreturn := middlesql1 + middlesql2
 
 	return sqlreturn
+}
+
+///
+///
+///
+
+// update the table from the struct
+// where is the where clause, example: "id = 1"
+func (db *DbConfig) UpdateTable(table string, where string, s interface{}) string {
+
+	//fmt.Println(s)
+
+	var middlesql1 string
+	var middlesql2 string
+
+	var reflectedValue reflect.Value = reflect.ValueOf(s)
+
+	middlesql1 = "UPDATE " + table + " SET "
+
+	//middlesql1 = "INSERT INTO " + table + " ("
+	//middlesql2 = ")VALUES("
+	for i := 0; i < reflectedValue.NumField(); i++ {
+
+		varName := reflectedValue.Type().Field(i).Name
+		varType := reflectedValue.Type().Field(i).Type
+		varValue := reflectedValue.Field(i).Interface()
+
+		// fmt.Println(varName, varType, varValue)
+
+		middlesql1 += varName + ","
+
+		// This is my normal way of working with reflect. Strings may be slower but easier to read.
+		switch varType.Kind() {
+		case reflect.Int:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(int)) + ","
+		case reflect.Int8:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(int8)) + ","
+		case reflect.Int16:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(int16)) + ","
+		case reflect.Int32:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(int32)) + ","
+		case reflect.Int64:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(int64)) + ","
+		case reflect.Uint:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(uint)) + ","
+		case reflect.Uint8:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(uint8)) + ","
+		case reflect.Uint16:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(uint16)) + ","
+		case reflect.Uint32:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(uint32)) + ","
+		case reflect.Uint64:
+			middlesql2 += fmt.Sprintf("%s = '%d'", varName, varValue.(uint64)) + ","
+		case reflect.String:
+			middlesql2 += fmt.Sprintf("%s = '%s'", varName, varValue.(string)) + ","
+		case reflect.Float32:
+			middlesql2 += fmt.Sprintf("%s = '%f'", varName, varValue.(float64)) + ","
+		case reflect.Float64:
+			middlesql2 += fmt.Sprintf("%s = '%f'", varName, varValue.(float64)) + ","
+		case reflect.Bool:
+			middlesql2 += fmt.Sprintf("%s = '%v'", varName, varValue.(bool)) + ","
+		case reflect.Slice:
+			middlesql2 += "'"
+			for _, kk := range varValue.([]string) {
+				middlesql2 += kk + " "
+			}
+			middlesql2 = strings.TrimRight(middlesql2, " ")
+			middlesql2 += "',"
+
+		default:
+			return ""
+		}
+	}
+
+	m1 := middlesql1
+	//middlesql1 = middlesql1[:len(middlesql1)-1]
+	middlesql2 = middlesql2[:len(middlesql2)-1] + ");"
+	m2 := middlesql2 + " WHERE  " + where + ";"
+
+	sqlreturn := m1 + m2
+	return sqlreturn
+}
+
+///
+///
+///
+
+// get the sqlite version and return it as a string
+func (db *DbConfig) GetSQLiteVersion() string {
+	var sqlVersion string
+	row := db.Db.QueryRow("select sqlite_version()")
+	row.Scan(&sqlVersion)
+	return sqlVersion
+}
+
+///
+///
+///
+
+// create a new database
+// this will drop the existing database
+func (db *DbConfig) CreateNewDB(table string, s interface{}) error {
+	err := db.RemoveAndCreateNewDB(table, s)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 ///
