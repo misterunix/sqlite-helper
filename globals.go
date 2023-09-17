@@ -6,8 +6,8 @@ import (
 )
 
 type DbConfig struct {
-	Db       *sql.DB
-	dblock   sync.Mutex // lock for the db
-	Path     string
-	Filename string
+	Db       *sql.DB    // db connection
+	dblock   sync.Mutex // lock for the db.
+	Path     string     // path to the db
+	Filename string     // filename of the db
 }
