@@ -14,4 +14,4 @@ type DbConfig struct {
 	Filename string     // filename of the db
 }
 
-const VERSION = "0.0.1"
+const VERSION = "0.0.2"
